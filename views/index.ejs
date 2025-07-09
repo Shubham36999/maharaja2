@@ -144,6 +144,21 @@
         "through a new image every day that updates automatically."
       );
     }
+// Auto-refresh the page at 11:59 PM local time
+(function scheduleRefreshAtMidnight() {
+  const now = new Date();
+  const millisTill1159 = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    23, 59, 0, 0
+  ) - now;
+
+  if (millisTill1159 > 0) {
+    setTimeout(() => location.reload(), millisTill1159 + 1000);
+  }
+})();
+
   </script>
 </body>
 </html>
