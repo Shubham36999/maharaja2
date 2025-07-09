@@ -1,149 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Daily Devotional</title>
-  <link rel="stylesheet" href="/style.css" />
-  <style>
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      background: url('/images/daily/<%= imageName %>') no-repeat center center;
-      background-size: cover;
-      filter: blur(15px) brightness(0.6);
-      z-index: -1;
-    }
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const ejs = require('ejs');
 
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
+const app = express();
 
-    header {
-      text-align: center;
-      padding: 10px 0;
-    }
+app.use(express.static(path.join(__dirname, '../public')));
 
-    #logo {
-      width: 100px;
-    }
+app.set('views', path.join(__dirname, '../views'));
+app.set('view engine', 'ejs');
 
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
+app.get('*', (req, res) => {
+  const monthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  const today = new Date();
+  const month = monthNames[today.getMonth()];
+  const day = today.getDate();
+  const baseName = `${month}${day}`;
+  let imageName = `${baseName}.jpg`;
 
-    .image-wrapper {
-      width: 90%;
-      max-width: 400px;
-    }
+  const pngPath = path.join(__dirname, '../public/images/daily', `${baseName}.png`);
+  if (fs.existsSync(pngPath)) {
+    imageName = `${baseName}.png`;
+  }
 
-    #daily-image {
-      width: 100%;
-      border-radius: 15px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    }
+  // ✅ Inject full URL for mobile sharing compatibility
+  const imageURL = `/images/daily/${imageName}`;
+  const absoluteImageURL = req.protocol + '://' + req.get('host') + imageURL;
 
-    .button-group {
-      margin-top: 15px;
-      display: flex;
-      gap: 10px;
-    }
+  res.render('index', { imageName, imageURL, absoluteImageURL });
+});
 
-    .btn {
-      padding: 8px 16px;
-      background-color: #f3e5ab;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      text-decoration: none;
-      color: black;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    }
-
-    .btn:hover {
-      background-color: #edd97e;
-    }
-
-    #about-btn {
-      margin: 20px auto 0;
-      display: block;
-    }
-
-    footer {
-      text-align: center;
-      padding: 10px 8px;
-      font-size: 0.85rem;
-      background-color: rgba(255, 255, 255, 0.6);
-      font-weight: 500;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <img src="/logo.png" alt="Devotional Logo" id="logo">
-  </header>
-
-  <main>
-    <div class="image-wrapper">
-      <img id="daily-image" src="/images/daily/<%= imageName %>" alt="Devotional Image of the Day"
-           onerror="this.src='/images/daily/default.png'" />
-    </div>
-
-    <div class="button-group">
-      <a id="download-btn" href="/images/daily/<%= imageName %>" download class="btn">Download</a>
-      <button class="btn" onclick="shareImage()">Share</button>
-    </div>
-
-    <button id="about-btn" class="btn" onclick="showAbout()">About Developer</button>
-  </main>
-
-  <footer>
-    Developed by Shubham Nitin Kulkarni<br />
-    © 2025 Copyrighted by<br />
-    P. P. Shri Pralhad Maharaj Sansthan Sakhar Kherda
-  </footer>
-
-  <script>
-    async function shareImage() {
-      const imagePath = `/images/daily/<%= imageName %>`;
-      const response = await fetch(imagePath);
-      const blob = await response.blob();
-      const file = new File([blob], "<%= imageName %>", { type: blob.type });
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            title: 'Daily Devotional Image',
-            text: 'Check out today’s devotional image.',
-            files: [file]
-          });
-        } catch (err) {
-          alert("Sharing was cancelled or failed.");
-        }
-      } else {
-        alert("Sharing is not supported on this device.");
-      }
-    }
-
-    function showAbout() {
-      alert(
-        "This devotional app is developed by Shubham Nitin Kulkarni.\n\n" +
-        "Purpose:\nTo provide daily blessings and darshan to devotees of Shri Pralhad Maharaj " +
-        "through a new image every day that updates automatically."
-      );
-    }
-  </script>
-</body>
-</html>
+module.exports = app;
