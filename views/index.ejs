@@ -58,8 +58,6 @@
       margin-top: 15px;
       display: flex;
       gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
     }
 
     .btn {
@@ -99,12 +97,13 @@
 
   <main>
     <div class="image-wrapper">
-      <img id="daily-image" src="/images/daily/<%= imageName %>?v=<%= Date.now() %>" alt="Devotional Image of the Day"
+      <img id="daily-image" src="/images/daily/<%= imageName %>?v=<%= Date.now() %>"
+           alt="Devotional Image of the Day"
            onerror="this.src='/images/daily/default.png'" />
     </div>
 
     <div class="button-group">
-      <button class="btn" onclick="forceDownload()">Download</button>
+      <a id="download-btn" href="/images/daily/<%= imageName %>" download class="btn">Download</a>
       <button class="btn" onclick="shareImage()">Share</button>
     </div>
 
@@ -118,37 +117,33 @@
   </footer>
 
   <script>
-    async function forceDownload() {
-      const imageURL = "<%= absoluteImageURL %>";
-      const filename = "<%= imageName %>";
-
-      try {
-        const response = await fetch(imageURL);
-        const blob = await response.blob();
-        const blobUrl = window.URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = blobUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        window.URL.revokeObjectURL(blobUrl);
-      } catch (err) {
-        alert("Download failed. Please try again.");
-        console.error(err);
-      }
+    function isAndroidWebView() {
+      const ua = navigator.userAgent || navigator.vendor || window.opera;
+      return /android/i.test(ua) && !navigator.canShare;
     }
 
     async function shareImage() {
-      const imageURL = "<%= absoluteImageURL %>";
-      const filename = "<%= imageName %>";
+      const imageUrl = "<%= absoluteImageURL %>";
 
+      if (isAndroidWebView()) {
+        // Fallback: share only link in Android WebView
+        try {
+          await navigator.share({
+            title: 'Daily Devotional Image',
+            text: 'See today’s devotional image.',
+            url: imageUrl
+          });
+        } catch (err) {
+          alert('Sharing was cancelled or failed.');
+        }
+        return;
+      }
+
+      // Modern browser: share image file
       try {
-        const response = await fetch(imageURL);
+        const response = await fetch(imageUrl);
         const blob = await response.blob();
-        const file = new File([blob], filename, { type: blob.type });
+        const file = new File([blob], "<%= imageName %>", { type: blob.type });
 
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
@@ -157,11 +152,10 @@
             files: [file]
           });
         } else {
-          alert("Sharing is not supported on this device.");
+          throw new Error("File sharing not supported");
         }
       } catch (err) {
-        alert("Sharing failed or was cancelled.");
-        console.error(err);
+        alert("Sharing is not supported or failed.");
       }
     }
 
@@ -173,8 +167,8 @@
       );
     }
 
-    // Auto-refresh the page after 11:59 PM
-    (function scheduleRefreshAtMidnight() {
+    // Auto-refresh at 11:59 PM
+    (function refreshAtMidnight() {
       const now = new Date();
       const millisTill1159 = new Date(
         now.getFullYear(),
