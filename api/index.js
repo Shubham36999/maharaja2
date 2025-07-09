@@ -5,14 +5,13 @@ const ejs = require('ejs');
 
 const app = express();
 
-// Serve static files from /public
+// Serve static files
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Set EJS as templating engine
+// EJS template engine setup
 app.set('views', path.join(__dirname, '../views'));
 app.set('view engine', 'ejs');
 
-// Main route
 app.get('*', (req, res) => {
   const monthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
   const today = new Date();
@@ -27,12 +26,16 @@ app.get('*', (req, res) => {
     imageName = `${baseName}.png`;
   }
 
-  // ✅ Construct absolute URL for image (needed for share on Android/Browser)
+  // ✅ Absolute Image URL (for share buttons)
   const imageURL = `/images/daily/${imageName}`;
   const absoluteImageURL = `${req.protocol}://${req.get('host')}${imageURL}`;
 
-  // Pass variables to EJS
-  res.render('index', { imageName, imageURL, absoluteImageURL });
+  // Send to EJS template
+  res.render('index', {
+    imageName,
+    imageURL,
+    absoluteImageURL
+  });
 });
 
 module.exports = app;
