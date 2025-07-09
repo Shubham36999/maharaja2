@@ -23,7 +23,11 @@ app.get('*', (req, res) => {
     imageName = `${baseName}.png`;
   }
 
-  res.render('index', { imageName });
+  // ✅ Inject full URL for mobile sharing compatibility
+  const imageURL = `/images/daily/${imageName}`;
+  const absoluteImageURL = req.protocol + '://' + req.get('host') + imageURL;
+
+  res.render('index', { imageName, imageURL, absoluteImageURL });
 });
 
 module.exports = app;
