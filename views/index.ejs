@@ -57,7 +57,9 @@
     .button-group {
       margin-top: 15px;
       display: flex;
+      flex-wrap: wrap;
       gap: 10px;
+      justify-content: center;
     }
 
     .btn {
@@ -74,6 +76,11 @@
 
     .btn:hover {
       background-color: #edd97e;
+    }
+
+    #whatsapp-share {
+      background-color: #25D366;
+      color: white;
     }
 
     #about-btn {
@@ -105,6 +112,11 @@
     <div class="button-group">
       <a id="download-btn" href="/images/daily/<%= imageName %>" download class="btn">Download</a>
       <button class="btn" onclick="shareImage()">Share</button>
+      <a class="btn" id="whatsapp-share"
+         href="https://wa.me/?text=🙏 Today's Devotional Image 🙏%0A<%= absoluteImageURL %>"
+         target="_blank">
+         Share on WhatsApp
+      </a>
     </div>
 
     <button id="about-btn" class="btn" onclick="showAbout()">About Developer</button>
@@ -126,7 +138,6 @@
       const imageUrl = "<%= absoluteImageURL %>";
 
       if (isAndroidWebView()) {
-        // Fallback: share only link in Android WebView
         try {
           await navigator.share({
             title: 'Daily Devotional Image',
@@ -139,7 +150,6 @@
         return;
       }
 
-      // Modern browser: share image file
       try {
         const response = await fetch(imageUrl);
         const blob = await response.blob();
@@ -167,7 +177,6 @@
       );
     }
 
-    // Auto-refresh at 11:59 PM
     (function refreshAtMidnight() {
       const now = new Date();
       const millisTill1159 = new Date(
